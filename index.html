@@ -1380,27 +1380,27 @@
       <label>內容</label>
       <div class="format-toolbar">
         <button type="button" class="fmt-btn fmt-bold"
-                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onmousedown="event.preventDefault()"
                 onclick="formatText('bold')" title="粗體">B</button>
         <button type="button" class="fmt-btn fmt-underline"
-                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onmousedown="event.preventDefault()"
                 onclick="formatText('underline')" title="底線">U</button>
         <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onmousedown="event.preventDefault()"
                 onclick="formatText('indent')" title="縮排">縮</button>
         <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onmousedown="event.preventDefault()"
                 onclick="formatText('outdent')" title="取消縮排">⇤</button>
         <span class="fmt-sep"></span>
         <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onmousedown="event.preventDefault()"
                 onclick="formatText('ul')" title="項目符號清單">• 列</button>
         <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onmousedown="event.preventDefault()"
                 onclick="formatText('ol')" title="編號清單">1. 列</button>
         <span class="fmt-sep"></span>
         <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onmousedown="event.preventDefault()"
                 onclick="formatText('undo')" title="復原">復原</button>
       </div>
       <div id="card-content" class="card-content-editor" contenteditable="true"
@@ -2323,9 +2323,9 @@ function _restoreSel() {
 }
 
 function formatText(type) {
-  _restoreSel();
   const editor = document.getElementById('card-content');
   editor.focus();
+  _restoreSel();
   if (type === 'bold') {
     document.execCommand('bold', false, null);
   } else if (type === 'underline') {
