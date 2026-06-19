@@ -1926,7 +1926,7 @@ function linkedCardHTML(linkedCard) {
     <div class="linked-card-item" onclick="showCard('${linkedCard.id}', null)">
       <div class="lc-cats">${h(catNames)}</div>
       <div class="lc-title">${h(linkedCard.title)}</div>
-      <div class="lc-preview">${h(linkedCard.content)}</div>
+      <div class="lc-preview">${h(plainText(linkedCard.content))}</div>
     </div>`;
 }
 
