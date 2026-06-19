@@ -2109,7 +2109,7 @@ function closeModal(id) {
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => {
     if (e.target !== overlay) return;
-    if (overlay.id === 'card-modal') { tryCloseCardModal(); return; }
+    if (overlay.id === 'card-modal') return;
     closeModal(overlay.id);
   });
 });
