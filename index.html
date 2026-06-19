@@ -1261,10 +1261,14 @@
       <div class="cat-chips" id="cat-chips"></div>
     </div>
     <div class="form-group">
-      <label>標籤（按 Enter 新增）</label>
+      <label>標籤（按 Enter 或點 ＋ 新增）</label>
       <div class="tag-display-row" id="tag-display-row"></div>
-      <input type="text" id="tag-text-input" placeholder="輸入標籤名稱後按 Enter…"
-             oninput="onTagInput(this.value)" onkeydown="onTagKeydown(event)" autocomplete="off">
+      <div style="display:flex;gap:0.4rem">
+        <input type="text" id="tag-text-input" placeholder="輸入標籤名稱…"
+               oninput="onTagInput(this.value)" onkeydown="onTagKeydown(event)" autocomplete="off"
+               style="flex:1">
+        <button type="button" onclick="addTagFromInput()" class="ph-btn sm" style="flex-shrink:0">＋</button>
+      </div>
       <div class="tag-suggestions" id="tag-suggestions"></div>
     </div>
     <div class="form-group">
@@ -2305,13 +2309,20 @@ function removeCardTag(tag) {
   renderTagDisplay();
 }
 
+function addTagFromInput() {
+  const inp = document.getElementById('tag-text-input');
+  const val = inp.value.replace(/,/g, '').trim();
+  if (val) addCardTag(val);
+  inp.value = '';
+  document.getElementById('tag-suggestions').innerHTML = '';
+  inp.focus();
+}
+
 function onTagKeydown(e) {
+  if (e.isComposing || e.keyCode === 229) return;
   if (e.key === 'Enter' || e.key === ',') {
     e.preventDefault();
-    const val = e.target.value.replace(/,/g, '').trim();
-    if (val) addCardTag(val);
-    e.target.value = '';
-    document.getElementById('tag-suggestions').innerHTML = '';
+    addTagFromInput();
   }
 }
 
