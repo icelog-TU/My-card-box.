@@ -846,7 +846,7 @@
     }
     .fmt-btn {
       border: 1px solid var(--ph-border);
-      background: var(--ph-dark);
+      background: var(--ph-bg);
       color: var(--ph-text);
       border-radius: 5px;
       padding: 0.22rem 0.6rem;
@@ -872,7 +872,7 @@
       font-size: 0.9rem;
       font-family: inherit;
       color: var(--ph-text);
-      background: var(--ph-dark);
+      background: var(--ph-bg);
       line-height: 1.65;
       outline: none;
       box-sizing: border-box;
@@ -1276,6 +1276,14 @@
       border: none;
       border-top: 1px solid var(--ph-border);
       margin: 1.2rem 0;
+    }
+
+    /* ── 手機版覆蓋（放在 CSS 最末，優先蓋過桌面版） ── */
+    @media (max-width: 640px) {
+      #page-wrapper { padding: 1.2rem 5px 5rem; }
+      .note-card    { padding: 0.9rem 10px 0.85rem; }
+      .card-detail  { padding: 1.2rem 10px 1.5rem; }
+      .browse-item  { padding: 0.55rem 4px; }
     }
   </style>
 </head>
