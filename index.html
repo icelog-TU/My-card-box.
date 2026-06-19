@@ -1519,17 +1519,47 @@ let editCatId    = null;
 let selectedCats  = [];
 let selectedLinks = [];
 
+const navStack = [];
+let _isGoingBack = false;
+
+function pushNav() {
+  if (_isGoingBack) return;
+  navStack.push({
+    view, activeCatId, activeCardId,
+    browseTagFilter, browseCatId, activeTagDetail
+  });
+}
+
 function goBack() {
-  if (view === 'card') {
-    activeCatId ? showCategory(activeCatId) : showHome();
-  } else if (view === 'tagdetail') {
-    showTagManager();
+  if (navStack.length > 0) {
+    const prev = navStack.pop();
+    _isGoingBack = true;
+    browseTagFilter = prev.browseTagFilter;
+    browseCatId     = prev.browseCatId;
+    activeTagDetail = prev.activeTagDetail;
+    if (prev.view === 'home') {
+      showHome();
+    } else if (prev.view === 'category') {
+      showCategory(prev.activeCatId);
+    } else if (prev.view === 'card') {
+      showCard(prev.activeCardId, prev.activeCatId);
+    } else if (prev.view === 'browse') {
+      showBrowse();
+    } else if (prev.view === 'tags') {
+      showTagManager();
+    } else if (prev.view === 'tagdetail') {
+      showTagDetail(prev.activeTagDetail);
+    } else {
+      showHome();
+    }
+    _isGoingBack = false;
   } else {
     showHome();
   }
 }
 
 function showHome() {
+  pushNav();
   view = 'home'; activeCatId = null; activeCardId = null;
   browseTagFilter = null;
   document.getElementById('breadcrumb').textContent = '';
@@ -1543,6 +1573,7 @@ function showHome() {
 }
 
 function showCategory(catId) {
+  pushNav();
   view = 'category'; activeCatId = catId; activeCardId = null;
   const cat = db.categories.find(c => c.id === catId);
   document.getElementById('breadcrumb').textContent = '培嘉卡片盒  ｜' + cat.name;
@@ -1553,6 +1584,7 @@ function showCategory(catId) {
 }
 
 function showCard(cardId, fromCatId) {
+  pushNav();
   view = 'card'; activeCardId = cardId;
   if (fromCatId) activeCatId = fromCatId;
   const card = db.cards.find(c => c.id === cardId);
@@ -2344,14 +2376,18 @@ function onTagInput(val) {
 let browseTagFilter = null;
 
 function showTagCards(tag) {
+  pushNav();
   browseTagFilter = tag;
   browseCatId = null;
+  _isGoingBack = true; // prevent double-push inside showBrowse
   showBrowse();
+  _isGoingBack = false;
 }
 
 // ── Tag Manager ──
 
 function showTagManager() {
+  pushNav();
   view = 'tags'; activeCatId = null; activeCardId = null;
   document.getElementById('breadcrumb').textContent = '培嘉卡片盒  ｜標籤管理';
   document.getElementById('home-btn').classList.remove('hidden');
@@ -2396,6 +2432,7 @@ function renderTagManager() {
 let activeTagDetail = null;
 
 function showTagDetail(tag) {
+  pushNav();
   activeTagDetail = tag;
   view = 'tagdetail'; activeCatId = null; activeCardId = null;
   document.getElementById('breadcrumb').textContent = '培嘉卡片盒  ｜標籤管理  ｜#' + tag;
@@ -2534,6 +2571,7 @@ let browseSort   = 'updated'; // 'updated' | 'created' | 'alpha'
 let browseCatId  = null;      // null = 全部
 
 function showBrowse() {
+  pushNav();
   view = 'browse'; activeCatId = null; activeCardId = null;
   const label = browseTagFilter ? `#${browseTagFilter}` : '全覽';
   document.getElementById('breadcrumb').textContent = '培嘉卡片盒  ｜' + label;
