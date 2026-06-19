@@ -1522,6 +1522,8 @@ let selectedLinks = [];
 function goBack() {
   if (view === 'card') {
     activeCatId ? showCategory(activeCatId) : showHome();
+  } else if (view === 'tagdetail') {
+    showTagManager();
   } else {
     showHome();
   }
@@ -2084,6 +2086,7 @@ function refresh() {
   else if (view === 'card') renderCardDetail(activeCardId);
   else if (view === 'browse') renderBrowse();
   else if (view === 'tags') renderTagManager();
+  else if (view === 'tagdetail') renderTagDetail();
 }
 
 let cardModalDirty = false;
@@ -2378,7 +2381,7 @@ function renderTagManager() {
               <span class="tm-tag">#${h(tag)}</span>
               <span class="tm-count">${ids.length} 張</span>
               <div class="tm-actions">
-                <button class="ph-btn sm" onclick="showTagCards('${h(tag)}')"><i data-lucide="eye" class="lucide icon-sm"></i> 查看</button>
+                <button class="ph-btn sm" onclick="showTagDetail('${h(tag)}')"><i data-lucide="eye" class="lucide icon-sm"></i> 查看／編輯</button>
                 <button class="ph-btn sm" onclick="renameTag('${h(tag)}')"><i data-lucide="pencil" class="lucide icon-sm"></i> 改名</button>
                 <button class="ph-btn sm" onclick="mergeTag('${h(tag)}')"><i data-lucide="git-merge" class="lucide icon-sm"></i> 合併到</button>
                 <button class="ph-btn sm danger" onclick="deleteTag('${h(tag)}')"><i data-lucide="trash-2" class="lucide icon-sm"></i> 刪除</button>
@@ -2386,6 +2389,107 @@ function renderTagManager() {
             </div>`).join('')}
         </div>`}`;
   lucide.createIcons();
+}
+
+// ── Tag Detail (search & bulk-add cards to a tag) ──
+
+let activeTagDetail = null;
+
+function showTagDetail(tag) {
+  activeTagDetail = tag;
+  view = 'tagdetail'; activeCatId = null; activeCardId = null;
+  document.getElementById('breadcrumb').textContent = '培嘉卡片盒  ｜標籤管理  ｜#' + tag;
+  document.getElementById('home-btn').classList.remove('hidden');
+  document.getElementById('back-btn').classList.remove('hidden');
+  document.getElementById('fab').classList.add('hidden');
+  renderTagDetail();
+}
+
+function renderTagDetail() {
+  const tag = activeTagDetail;
+  const el = document.getElementById('main-content');
+  const q = (document.getElementById('td-search')?.value || '').trim().toLowerCase();
+  const tagged   = db.cards.filter(c => (c.tags || []).includes(tag));
+  const taggedIds = new Set(tagged.map(c => c.id));
+  const results  = q
+    ? db.cards.filter(c => !taggedIds.has(c.id) && (
+        c.title.toLowerCase().includes(q) || c.content.toLowerCase().includes(q)
+      ))
+    : [];
+
+  const catNames = c => c.categoryIds
+    .map(id => db.categories.find(x => x.id === id)?.name).filter(Boolean).join(' · ');
+
+  el.innerHTML = `
+    <div class="ph-section-header" style="margin-bottom:1.2rem">
+      <h2>#${h(tag)} <span style="font-weight:400;color:var(--ph-text-lt);font-size:0.85em">${tagged.length} 張卡片</span></h2>
+    </div>
+
+    <div class="home-search-wrap" style="margin-bottom:${results.length || q ? '0.8rem' : '1.5rem'}">
+      <div class="home-search-box">
+        <i data-lucide="search" class="lucide icon-md search-icon"></i>
+        <input type="text" id="td-search" placeholder="搜尋卡片標題或內容，點擊加入標籤…"
+               oninput="renderTagDetail()" autocomplete="off" value="${h(q)}">
+        ${q ? `<button class="search-clear" onclick="document.getElementById('td-search').value='';renderTagDetail()"><i data-lucide="x" class="lucide icon-sm"></i></button>` : ''}
+      </div>
+    </div>
+
+    ${q && !results.length
+      ? `<p style="font-size:0.85rem;color:var(--ph-text-lt);margin-bottom:1.5rem">找不到未加入此標籤的卡片</p>`
+      : ''}
+
+    ${results.length ? `
+    <div style="margin-bottom:1.8rem">
+      <div class="search-result-count">找到 ${results.length} 張卡片 — 點擊即可加入</div>
+      <ul class="browse-list">
+        ${results.slice(0, 30).map(c => `
+          <li class="browse-item" onclick="addCardToTag('${c.id}')">
+            <i data-lucide="plus-circle" class="lucide icon-sm" style="color:var(--ph-accent);flex-shrink:0"></i>
+            <span class="browse-item-title">${h(c.title)}</span>
+            <span class="browse-item-meta">${h(catNames(c))}</span>
+          </li>`).join('')}
+      </ul>
+    </div>` : ''}
+
+    <div>
+      <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:var(--ph-text-lt);margin-bottom:0.6rem">
+        已加入此標籤的卡片
+      </div>
+      ${!tagged.length
+        ? `<p style="font-size:0.85rem;color:var(--ph-text-lt)">尚無卡片，搜尋後點擊加入</p>`
+        : `<ul class="browse-list">
+            ${tagged.map(c => `
+              <li class="browse-item">
+                <i data-lucide="check-circle" class="lucide icon-sm" style="color:var(--ph-accent);flex-shrink:0"></i>
+                <span class="browse-item-title" style="cursor:pointer" onclick="showCard('${c.id}',null)">${h(c.title)}</span>
+                <span class="browse-item-meta">${h(catNames(c))}</span>
+                <button class="ph-btn sm danger" onclick="removeCardFromTag('${c.id}')" style="flex-shrink:0">移除</button>
+              </li>`).join('')}
+          </ul>`}
+    </div>`;
+
+  lucide.createIcons();
+  const inp = document.getElementById('td-search');
+  if (inp && q) { inp.focus(); inp.setSelectionRange(q.length, q.length); }
+}
+
+function addCardToTag(cardId) {
+  const card = db.cards.find(c => c.id === cardId);
+  if (!card) return;
+  if (!card.tags) card.tags = [];
+  if (!card.tags.includes(activeTagDetail)) {
+    card.tags.push(activeTagDetail);
+    saveDB();
+  }
+  renderTagDetail();
+}
+
+function removeCardFromTag(cardId) {
+  const card = db.cards.find(c => c.id === cardId);
+  if (!card) return;
+  card.tags = (card.tags || []).filter(t => t !== activeTagDetail);
+  saveDB();
+  renderTagDetail();
 }
 
 function renameTag(oldTag) {
