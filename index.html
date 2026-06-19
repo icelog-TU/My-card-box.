@@ -1730,6 +1730,29 @@ function h(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// HTML → plain text（for previews and search）
+function plainText(html) {
+  if (!html) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return (tmp.innerText || tmp.textContent || '').replace(/\n+/g, ' ').trim();
+}
+
+// Strip browser-injected style spans before saving
+function cleanEditorHtml(html) {
+  if (!html || html === '<br>') return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  tmp.querySelectorAll('span').forEach(span => {
+    if (!span.className && span.getAttribute('style')) {
+      while (span.firstChild) span.parentNode.insertBefore(span.firstChild, span);
+      span.parentNode.removeChild(span);
+    }
+  });
+  const result = tmp.innerHTML.trim();
+  return result === '<br>' ? '' : result;
+}
+
 // ════════════════════════════════════════════
 //  Render — Home
 // ════════════════════════════════════════════
@@ -1812,7 +1835,7 @@ function renderCategory(catId) {
             <button class="card-act-btn danger" title="刪除" onclick="event.stopPropagation();confirmDeleteCard('${card.id}')"><i data-lucide="trash-2" class="lucide icon-sm"></i></button>
           </div>
           <h4>${h(card.title)}</h4>
-          <p class="preview">${h(card.content)}</p>
+          <p class="preview">${h(plainText(card.content))}</p>
           <div class="card-tags">
             ${card.categoryIds.map(id => {
               const c = db.categories.find(x => x.id === id);
@@ -1984,7 +2007,7 @@ function toggleCatChip(catId, el) {
 function saveCard() {
   const title   = document.getElementById('card-title').value.trim();
   const _ce = document.getElementById('card-content');
-  const content = (_ce.innerHTML === '<br>' ? '' : _ce.innerHTML).trim();
+  const content = cleanEditorHtml(_ce.innerHTML);
   if (!title) { alert('請輸入卡片標題'); return; }
 
   if (editCardId) {
@@ -2903,7 +2926,7 @@ function onHomeSearch(raw) {
           const cats = card.categoryIds
             .map(id => db.categories.find(x => x.id === id)?.name)
             .filter(Boolean);
-          const snippet = searchSnippet(card.content || '', q);
+          const snippet = searchSnippet(plainText(card.content), q);
           return `
             <div class="card-item" onclick="showCard('${card.id}', null)" style="cursor:pointer">
               <div class="card-item-title">${hlText(card.title, q)}</div>
