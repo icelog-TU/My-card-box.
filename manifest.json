@@ -1,6 +1,6 @@
 {
   "name": "培嘉卡片盒",
-  "short_name": "培嘉",
+  "short_name": "培嘉卡片盒",
   "description": "個人知識卡片管理系統",
   "start_url": "./",
   "display": "standalone",
