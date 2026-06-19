@@ -1272,6 +1272,28 @@
       color: var(--ph-text-lt);
       line-height: 1.5;
     }
+    .modal-close-bar {
+      position: sticky;
+      top: -2rem;
+      margin: -2rem -2.2rem 1rem;
+      padding: 0.45rem 0.6rem;
+      background: var(--ph-bg);
+      text-align: right;
+      z-index: 2;
+      border-bottom: 1px solid var(--ph-border);
+    }
+    .modal-close-btn {
+      border: none;
+      background: none;
+      font-size: 1.15rem;
+      color: var(--ph-text-lt);
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.25rem 0.55rem;
+      border-radius: 4px;
+    }
+    .modal-close-btn:hover { color: var(--ph-dark); background: var(--ph-page-bg); }
+
     .sync-divider {
       border: none;
       border-top: 1px solid var(--ph-border);
@@ -1281,8 +1303,8 @@
     /* ── 手機版覆蓋（放在 CSS 最末，優先蓋過桌面版） ── */
     @media (max-width: 640px) {
       #page-wrapper { padding: 1.2rem 5px 5rem; }
-      .note-card    { padding: 0.9rem 10px 0.85rem; }
-      .card-detail  { padding: 1.2rem 10px 1.5rem; }
+      .note-card    { padding: 0.9rem 20px 0.85rem; }
+      .card-detail  { padding: 1.2rem 20px 1.5rem; }
       .browse-item  { padding: 0.55rem 4px; }
     }
   </style>
@@ -1326,6 +1348,9 @@
 <!-- ── Card Modal ── -->
 <div class="modal-overlay hidden" id="card-modal">
   <div class="modal">
+    <div class="modal-close-bar">
+      <button class="modal-close-btn" onclick="tryCloseCardModal()" aria-label="關閉">✕</button>
+    </div>
     <h2 id="card-modal-title">新增卡片</h2>
     <div class="form-group">
       <label>標題</label>
