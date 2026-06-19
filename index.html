@@ -1693,6 +1693,7 @@ function showHome() {
   fab.onclick = openCategoryModal;
   fab.title = '新增目錄';
   renderHome();
+  window.scrollTo(0, 0);
 }
 
 function showCategory(catId) {
@@ -1704,6 +1705,7 @@ function showCategory(catId) {
   document.getElementById('back-btn').classList.remove('hidden');
   document.getElementById('fab').classList.add('hidden');
   renderCategory(catId);
+  window.scrollTo(0, 0);
 }
 
 function showCard(cardId, fromCatId) {
@@ -1719,6 +1721,7 @@ function showCard(cardId, fromCatId) {
   document.getElementById('back-btn').classList.remove('hidden');
   document.getElementById('fab').classList.add('hidden');
   renderCardDetail(cardId);
+  window.scrollTo(0, 0);
 }
 
 // ════════════════════════════════════════════
@@ -2607,6 +2610,7 @@ function showTagManager() {
   document.getElementById('back-btn').classList.remove('hidden');
   document.getElementById('fab').classList.add('hidden');
   renderTagManager();
+  window.scrollTo(0, 0);
 }
 
 function renderTagManager() {
@@ -2653,6 +2657,7 @@ function showTagDetail(tag) {
   document.getElementById('back-btn').classList.remove('hidden');
   document.getElementById('fab').classList.add('hidden');
   renderTagDetail();
+  window.scrollTo(0, 0);
 }
 
 function renderTagDetail() {
@@ -2791,6 +2796,7 @@ function showBrowse() {
   document.getElementById('back-btn').classList.remove('hidden');
   document.getElementById('fab').classList.add('hidden');
   renderBrowse();
+  window.scrollTo(0, 0);
 }
 
 function renderBrowse() {
