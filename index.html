@@ -1050,6 +1050,11 @@
     .browse-item-meta { font-size: 0.72rem; color: var(--ph-text-lt); white-space: nowrap; text-align: right; }
 
     /* ── Header dropdown menu ── */
+    #header-dropdown-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 299;
+    }
     .header-dropdown {
       position: fixed;
       top: 58px;
@@ -1227,13 +1232,16 @@
   <div class="header-sub" id="breadcrumb"></div>
 </header>
 
+<!-- ── Header dropdown backdrop (tap outside to close) ── -->
+<div class="hidden" id="header-dropdown-backdrop" ontouchstart="closeHeaderMenu()" onclick="closeHeaderMenu()"></div>
+
 <!-- ── Header dropdown ── -->
 <div class="hidden" id="header-dropdown">
-  <button class="hd-item" onclick="showBrowse();closeHeaderMenu()">
+  <button class="hd-item" ontouchend="showBrowse();closeHeaderMenu()" onclick="showBrowse();closeHeaderMenu()">
     <i data-lucide="clock" class="lucide icon-md"></i> 最近編輯
   </button>
   <hr class="hd-divider">
-  <button class="hd-item" onclick="showTagManager();closeHeaderMenu()">
+  <button class="hd-item" ontouchend="showTagManager();closeHeaderMenu()" onclick="showTagManager();closeHeaderMenu()">
     <i data-lucide="tag" class="lucide icon-md"></i> 標籤管理
   </button>
 </div>
@@ -2227,11 +2235,20 @@ async function pullFromCloud() {
 function toggleHeaderMenu(e) {
   e.stopPropagation();
   const dd = document.getElementById('header-dropdown');
-  dd.classList.toggle('hidden');
-  if (!dd.classList.contains('hidden')) lucide.createIcons();
+  const bd = document.getElementById('header-dropdown-backdrop');
+  const isHidden = dd.classList.contains('hidden');
+  if (isHidden) {
+    dd.classList.remove('hidden');
+    bd.classList.remove('hidden');
+    lucide.createIcons();
+  } else {
+    dd.classList.add('hidden');
+    bd.classList.add('hidden');
+  }
 }
 function closeHeaderMenu() {
   document.getElementById('header-dropdown').classList.add('hidden');
+  document.getElementById('header-dropdown-backdrop').classList.add('hidden');
 }
 
 // ════════════════════════════════════════════
@@ -2612,15 +2629,6 @@ lucide.createIcons();
 // ── 防止手機左滑手勢關掉 App ──
 // 推入一個假的歷史狀態，讓瀏覽器「退回」時先回到這裡
 history.pushState({ pjApp: true }, '');
-
-// Close header dropdown when clicking outside
-document.addEventListener('click', function(e) {
-  const dd = document.getElementById('header-dropdown');
-  const btn = document.getElementById('menu-btn');
-  if (dd && !dd.classList.contains('hidden') && !dd.contains(e.target) && btn && !btn.contains(e.target)) {
-    dd.classList.add('hidden');
-  }
-});
 
 window.addEventListener('popstate', function () {
   // 使用者觸發了瀏覽器返回（左滑） → 重新推入狀態，留在 App
