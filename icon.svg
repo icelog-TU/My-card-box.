@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 粉色背景 -->
+  <rect width="512" height="512" rx="110" fill="#f2849e"/>
+  <!-- 主卡片（白色） -->
+  <rect x="96" y="120" width="290" height="360" rx="28" fill="white"/>
+  <!-- 標題色塊 -->
+  <rect x="132" y="166" width="170" height="22" rx="11" fill="#f2849e" opacity="0.75"/>
+  <!-- 內文行 -->
+  <rect x="132" y="212" width="218" height="14" rx="7" fill="#e8a0b4" opacity="0.55"/>
+  <rect x="132" y="238" width="196" height="14" rx="7" fill="#e8a0b4" opacity="0.45"/>
+  <rect x="132" y="264" width="150" height="14" rx="7" fill="#e8a0b4" opacity="0.38"/>
+  <!-- 標籤 chip -->
+  <rect x="132" y="334" width="76" height="24" rx="12" fill="#f2849e" opacity="0.55"/>
+  <!-- 第二張卡片（右下偏移，製造層疊感） -->
+  <rect x="136" y="152" width="290" height="360" rx="28" fill="white" opacity="0.35"/>
+</svg>
