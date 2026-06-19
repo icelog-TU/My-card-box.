@@ -1050,16 +1050,11 @@
     .browse-item-meta { font-size: 0.72rem; color: var(--ph-text-lt); white-space: nowrap; text-align: right; }
 
     /* ── Header dropdown menu ── */
-    #header-dropdown-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 299;
-    }
     .header-dropdown {
-      position: fixed;
-      top: 58px;
+      position: absolute;
+      top: 100%;
       right: 1rem;
-      z-index: 300;
+      z-index: 9999;
       background: var(--ph-dark);
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 6px;
@@ -1230,21 +1225,16 @@
     </nav>
   </div>
   <div class="header-sub" id="breadcrumb"></div>
+  <div class="header-dropdown hidden" id="header-dropdown">
+    <button class="hd-item" onclick="showBrowse();closeHeaderMenu()">
+      <i data-lucide="clock" class="lucide icon-md"></i> 最近編輯
+    </button>
+    <hr class="hd-divider">
+    <button class="hd-item" onclick="showTagManager();closeHeaderMenu()">
+      <i data-lucide="tag" class="lucide icon-md"></i> 標籤管理
+    </button>
+  </div>
 </header>
-
-<!-- ── Header dropdown backdrop (tap outside to close) ── -->
-<div class="hidden" id="header-dropdown-backdrop" ontouchstart="closeHeaderMenu()" onclick="closeHeaderMenu()"></div>
-
-<!-- ── Header dropdown ── -->
-<div class="hidden" id="header-dropdown">
-  <button class="hd-item" ontouchend="showBrowse();closeHeaderMenu()" onclick="showBrowse();closeHeaderMenu()">
-    <i data-lucide="clock" class="lucide icon-md"></i> 最近編輯
-  </button>
-  <hr class="hd-divider">
-  <button class="hd-item" ontouchend="showTagManager();closeHeaderMenu()" onclick="showTagManager();closeHeaderMenu()">
-    <i data-lucide="tag" class="lucide icon-md"></i> 標籤管理
-  </button>
-</div>
 
 <!-- ── Main ── -->
 <div id="page-wrapper">
@@ -1260,11 +1250,11 @@
     <h2 id="card-modal-title">新增卡片</h2>
     <div class="form-group">
       <label>標題</label>
-      <input type="text" id="card-title" placeholder="輸入卡片標題…">
+      <input type="text" id="card-title" placeholder="輸入卡片標題…" oninput="cardModalDirty=true">
     </div>
     <div class="form-group">
       <label>內容</label>
-      <textarea id="card-content" placeholder="輸入卡片內容…"></textarea>
+      <textarea id="card-content" placeholder="輸入卡片內容…" oninput="cardModalDirty=true"></textarea>
     </div>
     <div class="form-group">
       <label>指定目錄（可多選）</label>
@@ -1286,7 +1276,7 @@
       <div class="linked-tags" id="linked-tags"></div>
     </div>
     <div class="modal-footer">
-      <button class="ph-btn" onclick="closeModal('card-modal')">取消</button>
+      <button class="ph-btn" onclick="tryCloseCardModal()">取消</button>
       <button class="ph-btn primary" onclick="saveCard()">儲存卡片</button>
     </div>
   </div>
@@ -1792,6 +1782,7 @@ function openCardModal(defaultCatId) {
   buildCatChips(pre);
   initTagInput([]);
   initLinkSearch([]);
+  cardModalDirty = false;
   document.getElementById('card-modal').classList.remove('hidden');
   setTimeout(() => document.getElementById('card-title').focus(), 50);
 }
@@ -1805,6 +1796,7 @@ function openEditCard(cardId) {
   buildCatChips(card.categoryIds);
   initTagInput(card.tags || []);
   initLinkSearch(card.links || []);
+  cardModalDirty = false;
   document.getElementById('card-modal').classList.remove('hidden');
   setTimeout(() => document.getElementById('card-title').focus(), 50);
 }
@@ -2089,13 +2081,28 @@ function refresh() {
   else if (view === 'tags') renderTagManager();
 }
 
+let cardModalDirty = false;
+
+function tryCloseCardModal() {
+  if (cardModalDirty && (
+    document.getElementById('card-title').value.trim() ||
+    document.getElementById('card-content').value.trim()
+  )) {
+    if (!confirm('你有未儲存的變更，確定要放棄嗎？')) return;
+  }
+  cardModalDirty = false;
+  closeModal('card-modal');
+}
+
 function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
 }
 
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => {
-    if (e.target === overlay) closeModal(overlay.id);
+    if (e.target !== overlay) return;
+    if (overlay.id === 'card-modal') { tryCloseCardModal(); return; }
+    closeModal(overlay.id);
   });
 });
 
@@ -2108,7 +2115,10 @@ document.getElementById('card-title').addEventListener('keydown', e => {
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    ['card-modal','category-modal','confirm-modal','link-manager-modal'].forEach(id => {
+    if (!document.getElementById('card-modal').classList.contains('hidden')) {
+      tryCloseCardModal(); return;
+    }
+    ['category-modal','confirm-modal','link-manager-modal'].forEach(id => {
       if (!document.getElementById(id).classList.contains('hidden')) closeModal(id);
     });
   }
@@ -2235,21 +2245,23 @@ async function pullFromCloud() {
 function toggleHeaderMenu(e) {
   e.stopPropagation();
   const dd = document.getElementById('header-dropdown');
-  const bd = document.getElementById('header-dropdown-backdrop');
-  const isHidden = dd.classList.contains('hidden');
-  if (isHidden) {
+  if (dd.classList.contains('hidden')) {
     dd.classList.remove('hidden');
-    bd.classList.remove('hidden');
     lucide.createIcons();
   } else {
     dd.classList.add('hidden');
-    bd.classList.add('hidden');
   }
 }
 function closeHeaderMenu() {
   document.getElementById('header-dropdown').classList.add('hidden');
-  document.getElementById('header-dropdown-backdrop').classList.add('hidden');
 }
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('header-dropdown');
+  const btn = document.getElementById('menu-btn');
+  if (!dd.classList.contains('hidden') && !dd.contains(e.target) && !btn.contains(e.target)) {
+    closeHeaderMenu();
+  }
+});
 
 // ════════════════════════════════════════════
 //  Tag system
