@@ -860,19 +860,38 @@
       background: var(--ph-bg);
       color: var(--ph-text);
       border-radius: 5px;
-      padding: 0.22rem 0.6rem;
-      font-size: 0.82rem;
-      font-family: inherit;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      line-height: 1.4;
-      white-space: nowrap;
+      flex-shrink: 0;
+      position: relative;
       transition: background 0.12s, color 0.12s;
       -webkit-user-select: none;
       user-select: none;
     }
-    .fmt-btn:hover { background: var(--ph-accent); color: #fff; border-color: var(--ph-accent); }
-    .fmt-btn.fmt-bold { font-weight: 700; }
-    .fmt-btn.fmt-underline { text-decoration: underline; }
+    .fmt-btn:hover, .fmt-btn:active { background: var(--ph-accent); color: #fff; border-color: var(--ph-accent); }
+    .fmt-btn::after {
+      content: attr(title);
+      position: absolute;
+      bottom: calc(100% + 5px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ph-dark);
+      color: #fff;
+      font-size: 0.62rem;
+      padding: 0.18rem 0.45rem;
+      border-radius: 3px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 10;
+    }
+    .fmt-btn:hover::after, .fmt-btn:active::after { opacity: 1; }
     .fmt-sep { width: 1px; background: var(--ph-border); align-self: stretch; margin: 0 2px; }
     .card-content-editor {
       width: 100%;
@@ -1379,29 +1398,29 @@
     <div class="form-group">
       <label>內容</label>
       <div class="format-toolbar">
-        <button type="button" class="fmt-btn fmt-bold"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('bold')" title="粗體">B</button>
-        <button type="button" class="fmt-btn fmt-underline"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('underline')" title="底線">U</button>
-        <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('indent')" title="縮排">縮</button>
-        <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('outdent')" title="取消縮排">⇤</button>
+        <button type="button" class="fmt-btn" onmousedown="event.preventDefault()"
+                onclick="formatText('bold')" title="粗體">
+          <i data-lucide="bold" class="lucide icon-sm"></i></button>
+        <button type="button" class="fmt-btn" onmousedown="event.preventDefault()"
+                onclick="formatText('underline')" title="底線">
+          <i data-lucide="underline" class="lucide icon-sm"></i></button>
+        <button type="button" class="fmt-btn" onmousedown="event.preventDefault()"
+                onclick="formatText('indent')" title="縮排">
+          <i data-lucide="indent" class="lucide icon-sm"></i></button>
+        <button type="button" class="fmt-btn" onmousedown="event.preventDefault()"
+                onclick="formatText('outdent')" title="取消縮排">
+          <i data-lucide="outdent" class="lucide icon-sm"></i></button>
         <span class="fmt-sep"></span>
-        <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('ul')" title="項目符號清單">• 列</button>
-        <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('ol')" title="編號清單">1. 列</button>
+        <button type="button" class="fmt-btn" onmousedown="event.preventDefault()"
+                onclick="formatText('ul')" title="項目符號清單">
+          <i data-lucide="list" class="lucide icon-sm"></i></button>
+        <button type="button" class="fmt-btn" onmousedown="event.preventDefault()"
+                onclick="formatText('ol')" title="編號清單">
+          <i data-lucide="list-ordered" class="lucide icon-sm"></i></button>
         <span class="fmt-sep"></span>
-        <button type="button" class="fmt-btn"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('undo')" title="復原">復原</button>
+        <button type="button" class="fmt-btn" onmousedown="event.preventDefault()"
+                onclick="formatText('undo')" title="復原上一步">
+          <i data-lucide="rotate-ccw" class="lucide icon-sm"></i></button>
       </div>
       <div id="card-content" class="card-content-editor" contenteditable="true"
            data-placeholder="輸入卡片內容…"
@@ -2002,6 +2021,7 @@ function openCardModal(defaultCatId) {
   initLinkSearch([]);
   cardModalDirty = false;
   document.getElementById('card-modal').classList.remove('hidden');
+  lucide.createIcons();
   setTimeout(() => document.getElementById('card-title').focus(), 50);
 }
 
@@ -2016,6 +2036,7 @@ function openEditCard(cardId) {
   initLinkSearch(card.links || []);
   cardModalDirty = false;
   document.getElementById('card-modal').classList.remove('hidden');
+  lucide.createIcons();
   setTimeout(() => document.getElementById('card-title').focus(), 50);
 }
 
