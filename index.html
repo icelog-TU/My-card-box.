@@ -1022,6 +1022,27 @@
     }
     .filter-chip:hover:not(.active) { border-color: var(--ph-accent); color: var(--ph-accent); }
 
+    .browse-filter-section {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      margin-bottom: 0.65rem;
+    }
+    .browse-filter-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--ph-text-lt);
+      white-space: nowrap;
+      min-width: 2.2rem;
+      padding-top: 0.32rem;
+      letter-spacing: 0.03em;
+    }
+    .browse-filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
     .sort-select {
       margin-left: auto;
       border: 1px solid var(--ph-border);
@@ -1227,7 +1248,7 @@
   <div class="header-sub" id="breadcrumb"></div>
   <div class="header-dropdown hidden" id="header-dropdown">
     <button class="hd-item" onclick="showBrowse();closeHeaderMenu()">
-      <i data-lucide="clock" class="lucide icon-md"></i> 最近編輯
+      <i data-lucide="layout-list" class="lucide icon-md"></i> 全覽卡片
     </button>
     <hr class="hd-divider">
     <button class="hd-item" onclick="showTagManager();closeHeaderMenu()">
@@ -2567,14 +2588,13 @@ function deleteTag(tag) {
 //  Browse view
 // ════════════════════════════════════════════
 
-let browseSort   = 'updated'; // 'updated' | 'created' | 'alpha'
-let browseCatId  = null;      // null = 全部
+let browseSort   = 'newest'; // 'newest' | 'oldest' | 'alpha'
+let browseCatId  = null;     // null = 全部
 
 function showBrowse() {
   pushNav();
   view = 'browse'; activeCatId = null; activeCardId = null;
-  const label = browseTagFilter ? `#${browseTagFilter}` : '全覽';
-  document.getElementById('breadcrumb').textContent = '培嘉卡片盒  ｜' + label;
+  document.getElementById('breadcrumb').textContent = '培嘉卡片盒  ｜全覽卡片';
   document.getElementById('home-btn').classList.remove('hidden');
   document.getElementById('back-btn').classList.remove('hidden');
   document.getElementById('fab').classList.add('hidden');
@@ -2584,42 +2604,64 @@ function showBrowse() {
 function renderBrowse() {
   const el = document.getElementById('main-content');
 
+  // Collect all tags across all cards, sorted
+  const allTags = [...new Set(db.cards.flatMap(c => c.tags || []))]
+    .sort((a, b) => a.localeCompare(b, 'zh-TW'));
+
+  // Apply filters (category AND tag are independent, combinable)
   let cards = [...db.cards];
-  if (browseTagFilter) {
-    cards = cards.filter(c => (c.tags || []).includes(browseTagFilter));
-  } else if (browseCatId) {
+  if (browseCatId) {
     cards = cards.filter(c => c.categoryIds.includes(browseCatId));
   }
+  if (browseTagFilter) {
+    cards = cards.filter(c => (c.tags || []).includes(browseTagFilter));
+  }
 
-  if (browseSort === 'updated') {
+  if (browseSort === 'newest') {
     cards.sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt));
-  } else if (browseSort === 'created') {
-    cards.sort((a, b) => b.createdAt - a.createdAt);
+  } else if (browseSort === 'oldest') {
+    cards.sort((a, b) => (a.createdAt || a.updatedAt) - (b.createdAt || b.updatedAt));
   } else {
     cards.sort((a, b) => a.title.localeCompare(b.title, 'zh-TW'));
   }
 
   el.innerHTML = `
-    <div class="ph-section-header" style="margin-bottom:1.2rem">
-      <h2>全覽 <span style="font-weight:400;color:var(--ph-text-lt);font-size:0.85em">${cards.length} 張</span></h2>
+    <div class="ph-section-header" style="margin-bottom:1rem">
+      <h2>全覽卡片 <span style="font-weight:400;color:var(--ph-text-lt);font-size:0.85em">${cards.length} 張</span></h2>
     </div>
-    <div class="browse-filter-row">
-      ${browseTagFilter
-        ? `<button class="filter-chip active">#${h(browseTagFilter)}</button>
-           <button class="filter-chip" onclick="browseTagFilter=null;setBrowseCat(null)">✕ 清除篩選</button>`
-        : `<button class="filter-chip ${!browseCatId ? 'active' : ''}" onclick="setBrowseCat(null)">全部</button>
-           ${db.categories.map(cat => `
-             <button class="filter-chip ${browseCatId === cat.id ? 'active' : ''}" onclick="setBrowseCat('${cat.id}')">${h(cat.name)}</button>
-           `).join('')}`}
-      <select class="sort-select" onchange="setBrowseSort(this.value)">
-        <option value="updated"  ${browseSort==='updated' ?'selected':''}>最近編輯</option>
-        <option value="created"  ${browseSort==='created' ?'selected':''}>最近建立</option>
-        <option value="alpha"    ${browseSort==='alpha'   ?'selected':''}>標題 A–Z</option>
-      </select>
+
+    <div class="browse-filter-section">
+      <span class="browse-filter-label">目錄</span>
+      <div class="browse-filter-chips">
+        <button class="filter-chip ${!browseCatId ? 'active' : ''}" onclick="setBrowseCat(null)">全部</button>
+        ${db.categories.map(cat => `
+          <button class="filter-chip ${browseCatId === cat.id ? 'active' : ''}" onclick="setBrowseCat('${cat.id}')">${h(cat.name)}</button>
+        `).join('')}
+      </div>
     </div>
-    <ul class="browse-list">
+
+    <div class="browse-filter-section">
+      <span class="browse-filter-label">標籤</span>
+      <div class="browse-filter-chips">
+        <button class="filter-chip ${!browseTagFilter ? 'active' : ''}" onclick="setBrowseTag(null)">全部</button>
+        ${allTags.map(tag => `
+          <button class="filter-chip ${browseTagFilter === tag ? 'active' : ''}" onclick="setBrowseTag('${h(tag)}')">#${h(tag)}</button>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="browse-filter-section">
+      <span class="browse-filter-label">時序</span>
+      <div class="browse-filter-chips">
+        <button class="filter-chip ${browseSort === 'newest' ? 'active' : ''}" onclick="setBrowseSort('newest')">最新 → 最舊</button>
+        <button class="filter-chip ${browseSort === 'oldest' ? 'active' : ''}" onclick="setBrowseSort('oldest')">最舊 → 最新</button>
+        <button class="filter-chip ${browseSort === 'alpha' ? 'active' : ''}" onclick="setBrowseSort('alpha')">標題 A–Z</button>
+      </div>
+    </div>
+
+    <ul class="browse-list" style="margin-top:0.5rem">
       ${!cards.length
-        ? `<li style="padding:1.5rem 0;color:var(--ph-text-lt);text-align:center">這個目錄還沒有卡片</li>`
+        ? `<li style="padding:1.5rem 0;color:var(--ph-text-lt);text-align:center">沒有符合的卡片</li>`
         : cards.map(card => {
             const cats = card.categoryIds
               .map(id => db.categories.find(x => x.id === id)?.name)
@@ -2628,7 +2670,7 @@ function renderBrowse() {
             return `
               <li class="browse-item" onclick="showCard('${card.id}', null)">
                 <span class="browse-item-title">${h(card.title)}</span>
-                <span class="browse-item-meta">${h(cats)}<br>${t}</span>
+                <span class="browse-item-meta">${cats ? h(cats) + '<br>' : ''}${t}</span>
               </li>`;
           }).join('')}
     </ul>`;
@@ -2636,8 +2678,9 @@ function renderBrowse() {
   lucide.createIcons();
 }
 
-function setBrowseSort(sort) { browseSort = sort; renderBrowse(); }
+function setBrowseSort(sort)  { browseSort = sort; renderBrowse(); }
 function setBrowseCat(catId)  { browseCatId = catId; renderBrowse(); }
+function setBrowseTag(tag)    { browseTagFilter = tag; renderBrowse(); }
 
 function formatTimeAgo(ts) {
   if (!ts) return '';
