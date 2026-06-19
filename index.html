@@ -871,6 +871,7 @@
     .fmt-btn:hover { background: var(--ph-accent); color: #fff; border-color: var(--ph-accent); }
     .fmt-btn.fmt-bold { font-weight: 700; }
     .fmt-btn.fmt-underline { text-decoration: underline; }
+    .fmt-sep { width: 1px; background: var(--ph-border); align-self: stretch; margin: 0 2px; }
     .card-content-editor {
       width: 100%;
       min-height: 110px;
@@ -896,6 +897,10 @@
       pointer-events: none;
     }
     .card-content-editor .ph-indent { margin-left: 1.4em; display: block; }
+    .card-content-editor ul, .card-content-editor ol { margin: 0.3em 0 0.3em 1.4em; padding: 0; }
+    .card-content-editor li { margin: 0.15em 0; }
+    .card-detail .content ul, .card-detail .content ol { margin: 0.4em 0 0.4em 1.4em; padding: 0; }
+    .card-detail .content li { margin: 0.2em 0; }
 
     .confirm-msg {
       font-size: 0.92rem;
@@ -1384,6 +1389,17 @@
         <button type="button" class="fmt-btn"
                 onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
                 onclick="formatText('outdent')" title="取消縮排">⇤</button>
+        <span class="fmt-sep"></span>
+        <button type="button" class="fmt-btn"
+                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onclick="formatText('ul')" title="項目符號清單">• 清單</button>
+        <button type="button" class="fmt-btn"
+                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onclick="formatText('ol')" title="編號清單">1. 編號</button>
+        <span class="fmt-sep"></span>
+        <button type="button" class="fmt-btn"
+                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onclick="formatText('undo')" title="復原">↩ 復原</button>
       </div>
       <div id="card-content" class="card-content-editor" contenteditable="true"
            data-placeholder="輸入卡片內容…"
@@ -2314,6 +2330,12 @@ function formatText(type) {
     _wrapWithIndent(true);
   } else if (type === 'outdent') {
     _wrapWithIndent(false);
+  } else if (type === 'ul') {
+    document.execCommand('insertUnorderedList', false, null);
+  } else if (type === 'ol') {
+    document.execCommand('insertOrderedList', false, null);
+  } else if (type === 'undo') {
+    document.execCommand('undo', false, null);
   }
   cardModalDirty = true;
 }
