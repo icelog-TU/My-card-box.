@@ -837,6 +837,55 @@
       border-top: 1px solid var(--ph-border);
     }
 
+    /* ── Format toolbar (card editor) ── */
+    .format-toolbar {
+      display: flex;
+      gap: 0.3rem;
+      margin-bottom: 0.35rem;
+    }
+    .fmt-btn {
+      border: 1px solid var(--ph-border);
+      background: var(--ph-dark);
+      color: var(--ph-text);
+      border-radius: 5px;
+      padding: 0.22rem 0.6rem;
+      font-size: 0.82rem;
+      font-family: inherit;
+      cursor: pointer;
+      line-height: 1.4;
+      transition: background 0.12s, color 0.12s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .fmt-btn:hover { background: var(--ph-accent); color: #fff; border-color: var(--ph-accent); }
+    .fmt-btn.fmt-bold { font-weight: 700; }
+    .fmt-btn.fmt-underline { text-decoration: underline; }
+    .card-content-editor {
+      width: 100%;
+      min-height: 110px;
+      max-height: 38vh;
+      overflow-y: auto;
+      border: 1px solid var(--ph-border);
+      border-radius: 6px;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--ph-text);
+      background: var(--ph-dark);
+      line-height: 1.65;
+      outline: none;
+      box-sizing: border-box;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .card-content-editor:focus { border-color: var(--ph-accent); }
+    .card-content-editor:empty::before {
+      content: attr(data-placeholder);
+      color: var(--ph-text-lt);
+      pointer-events: none;
+    }
+    .card-content-editor .ph-indent { margin-left: 1.4em; display: block; }
+
     .confirm-msg {
       font-size: 0.92rem;
       font-weight: 400;
@@ -1275,7 +1324,23 @@
     </div>
     <div class="form-group">
       <label>內容</label>
-      <textarea id="card-content" placeholder="輸入卡片內容…" oninput="cardModalDirty=true"></textarea>
+      <div class="format-toolbar">
+        <button type="button" class="fmt-btn fmt-bold"
+                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onclick="formatText('bold')" title="粗體">B</button>
+        <button type="button" class="fmt-btn fmt-underline"
+                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onclick="formatText('underline')" title="底線">U</button>
+        <button type="button" class="fmt-btn"
+                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onclick="formatText('indent')" title="縮排">⇥ 縮排</button>
+        <button type="button" class="fmt-btn"
+                onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
+                onclick="formatText('outdent')" title="取消縮排">⇤</button>
+      </div>
+      <div id="card-content" class="card-content-editor" contenteditable="true"
+           data-placeholder="輸入卡片內容…"
+           oninput="cardModalDirty=true"></div>
     </div>
     <div class="form-group">
       <label>指定目錄（可多選）</label>
@@ -1806,7 +1871,7 @@ function renderCardDetail(cardId) {
           <button class="ph-btn sm danger" onclick="confirmDeleteCard('${card.id}')"><i data-lucide="trash-2" class="lucide icon-sm"></i> 刪除</button>
         </div>
       </div>
-      <div class="content">${h(card.content)}</div>
+      <div class="content">${card.content || ''}</div>
       <div class="card-meta">
         <span class="card-meta-label">所屬目錄</span>
         <div class="tag-list">
@@ -1837,7 +1902,7 @@ function openCardModal(defaultCatId) {
   editCardId = null;
   document.getElementById('card-modal-title').textContent = '新增卡片';
   document.getElementById('card-title').value = '';
-  document.getElementById('card-content').value = '';
+  document.getElementById('card-content').innerHTML = '';
   const pre = defaultCatId ? [defaultCatId] : (activeCatId ? [activeCatId] : []);
   buildCatChips(pre);
   initTagInput([]);
@@ -1852,7 +1917,7 @@ function openEditCard(cardId) {
   const card = db.cards.find(c => c.id === cardId);
   document.getElementById('card-modal-title').textContent = '編輯卡片';
   document.getElementById('card-title').value = card.title;
-  document.getElementById('card-content').value = card.content;
+  document.getElementById('card-content').innerHTML = card.content || '';
   buildCatChips(card.categoryIds);
   initTagInput(card.tags || []);
   initLinkSearch(card.links || []);
@@ -1882,7 +1947,8 @@ function toggleCatChip(catId, el) {
 
 function saveCard() {
   const title   = document.getElementById('card-title').value.trim();
-  const content = document.getElementById('card-content').value.trim();
+  const _ce = document.getElementById('card-content');
+  const content = (_ce.innerHTML === '<br>' ? '' : _ce.innerHTML).trim();
   if (!title) { alert('請輸入卡片標題'); return; }
 
   if (editCardId) {
@@ -2144,10 +2210,76 @@ function refresh() {
 
 let cardModalDirty = false;
 
+// ── Rich-text formatting ──
+let _savedSel = null;
+
+document.addEventListener('selectionchange', () => {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const editor = document.getElementById('card-content');
+  if (editor && editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    _savedSel = sel.getRangeAt(0).cloneRange();
+  }
+});
+
+function _restoreSel() {
+  if (!_savedSel) return;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(_savedSel);
+}
+
+function formatText(type) {
+  _restoreSel();
+  const editor = document.getElementById('card-content');
+  editor.focus();
+  if (type === 'bold') {
+    document.execCommand('bold', false, null);
+  } else if (type === 'underline') {
+    document.execCommand('underline', false, null);
+  } else if (type === 'indent') {
+    _wrapWithIndent(true);
+  } else if (type === 'outdent') {
+    _wrapWithIndent(false);
+  }
+  cardModalDirty = true;
+}
+
+function _wrapWithIndent(doIndent) {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const range = sel.getRangeAt(0);
+
+  if (doIndent) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ph-indent';
+    try {
+      wrapper.appendChild(range.extractContents());
+      range.insertNode(wrapper);
+      range.setStartAfter(wrapper);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch(e) {}
+  } else {
+    // Outdent: if selection is inside .ph-indent, unwrap it
+    let node = range.commonAncestorContainer;
+    while (node && node !== document.getElementById('card-content')) {
+      if (node.classList && node.classList.contains('ph-indent')) {
+        const parent = node.parentNode;
+        while (node.firstChild) parent.insertBefore(node.firstChild, node);
+        parent.removeChild(node);
+        break;
+      }
+      node = node.parentNode;
+    }
+  }
+}
+
 function tryCloseCardModal() {
   if (cardModalDirty && (
     document.getElementById('card-title').value.trim() ||
-    document.getElementById('card-content').value.trim()
+    document.getElementById('card-content').innerText.trim()
   )) {
     if (!confirm('你有未儲存的變更，確定要放棄嗎？')) return;
   }
