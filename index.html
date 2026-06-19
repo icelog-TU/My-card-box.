@@ -1330,7 +1330,8 @@
 
 <!-- ── Sync Modal ── -->
 <div class="modal-overlay hidden" id="sync-modal">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:480px;position:relative">
+    <button onclick="closeModal('sync-modal')" style="position:absolute;top:1rem;right:1rem;background:none;border:none;cursor:pointer;color:var(--ph-text-lt);padding:2px;display:flex;align-items:center;" title="關閉"><i data-lucide="x" class="lucide icon-md"></i></button>
     <h2><i data-lucide="cloud" class="lucide icon-md"></i> 雲端同步</h2>
 
     <div class="sync-status-bar" id="sync-status-bar">尚未與雲端同步</div>
