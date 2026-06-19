@@ -851,6 +851,7 @@
     /* ── Format toolbar (card editor) ── */
     .format-toolbar {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.3rem;
       margin-bottom: 0.35rem;
     }
@@ -864,6 +865,7 @@
       font-family: inherit;
       cursor: pointer;
       line-height: 1.4;
+      white-space: nowrap;
       transition: background 0.12s, color 0.12s;
       -webkit-user-select: none;
       user-select: none;
@@ -1385,21 +1387,21 @@
                 onclick="formatText('underline')" title="底線">U</button>
         <button type="button" class="fmt-btn"
                 onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
-                onclick="formatText('indent')" title="縮排">⇥ 縮排</button>
+                onclick="formatText('indent')" title="縮排">縮</button>
         <button type="button" class="fmt-btn"
                 onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
                 onclick="formatText('outdent')" title="取消縮排">⇤</button>
         <span class="fmt-sep"></span>
         <button type="button" class="fmt-btn"
                 onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
-                onclick="formatText('ul')" title="項目符號清單">• 清單</button>
+                onclick="formatText('ul')" title="項目符號清單">• 列</button>
         <button type="button" class="fmt-btn"
                 onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
-                onclick="formatText('ol')" title="編號清單">1. 編號</button>
+                onclick="formatText('ol')" title="編號清單">1. 列</button>
         <span class="fmt-sep"></span>
         <button type="button" class="fmt-btn"
                 onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
-                onclick="formatText('undo')" title="復原">↩ 復原</button>
+                onclick="formatText('undo')" title="復原">復原</button>
       </div>
       <div id="card-content" class="card-content-editor" contenteditable="true"
            data-placeholder="輸入卡片內容…"
@@ -1842,7 +1844,9 @@ function renderHome() {
 
 function renderCategory(catId) {
   const el = document.getElementById('main-content');
-  const cards = db.cards.filter(c => c.categoryIds.includes(catId));
+  const cards = db.cards
+    .filter(c => c.categoryIds.includes(catId))
+    .sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt));
   const catIdx = db.categories.findIndex(c => c.id === catId);
   const accent = catColor(catIdx);
 
