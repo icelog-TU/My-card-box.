@@ -2842,12 +2842,19 @@ function deleteTag(tag) {
 //  Browse view
 // ════════════════════════════════════════════
 
-let browseSort   = 'newest'; // 'newest' | 'oldest' | 'alpha'
-let browseCatId  = null;     // null = 全部
+let browseSort    = 'newest'; // 'newest' | 'oldest' | 'alpha'
+let browseCatId   = null;     // null = 全部
+let browseTagOpen = false;    // tag section collapsed by default
+
+function toggleBrowseTagSection() {
+  browseTagOpen = !browseTagOpen;
+  renderBrowse();
+}
 
 function showBrowse() {
   pushNav();
   view = 'browse'; activeCatId = null; activeCardId = null;
+  if (!browseTagFilter) browseTagOpen = false;
   document.getElementById('breadcrumb').textContent = '培嘉卡片盒  ｜全覽卡片';
   document.getElementById('home-btn').classList.remove('hidden');
   document.getElementById('back-btn').classList.remove('hidden');
@@ -2895,13 +2902,22 @@ function renderBrowse() {
       </div>
     </div>
 
-    <div class="browse-filter-section">
-      <span class="browse-filter-label">標籤</span>
-      <div class="browse-filter-chips">
-        <button class="filter-chip ${!browseTagFilter ? 'active' : ''}" onclick="setBrowseTag(null)">全部</button>
-        ${allTags.map(tag => `
-          <button class="filter-chip ${browseTagFilter === tag ? 'active' : ''}" onclick="setBrowseTag('${h(tag)}')">#${h(tag)}</button>
-        `).join('')}
+    <div class="browse-filter-section" style="align-items:flex-start">
+      <span class="browse-filter-label" style="padding-top:0.32rem">標籤</span>
+      <div style="flex:1;min-width:0">
+        <button class="filter-chip browse-tag-toggle" onclick="toggleBrowseTagSection()" style="margin-bottom:${browseTagOpen || browseTagFilter ? '0.5rem' : '0'}">
+          ${browseTagFilter
+            ? `#${h(browseTagFilter)} <span style="opacity:0.6;margin-left:2px">✕</span>`
+            : `${allTags.length} 個標籤`}
+          <i data-lucide="${browseTagOpen || browseTagFilter ? 'chevron-up' : 'chevron-down'}" class="lucide" style="width:12px;height:12px;margin-left:3px;vertical-align:middle"></i>
+        </button>
+        ${(browseTagOpen || browseTagFilter) ? `
+        <div class="browse-filter-chips">
+          <button class="filter-chip ${!browseTagFilter ? 'active' : ''}" onclick="setBrowseTag(null)">全部</button>
+          ${allTags.map(tag => `
+            <button class="filter-chip ${browseTagFilter === tag ? 'active' : ''}" onclick="setBrowseTag('${h(tag)}')">#${h(tag)}</button>
+          `).join('')}
+        </div>` : ''}
       </div>
     </div>
 
@@ -2935,7 +2951,7 @@ function renderBrowse() {
 
 function setBrowseSort(sort)  { browseSort = sort; renderBrowse(); }
 function setBrowseCat(catId)  { browseCatId = catId; renderBrowse(); }
-function setBrowseTag(tag)    { browseTagFilter = tag; renderBrowse(); }
+function setBrowseTag(tag)    { browseTagFilter = tag; if (!tag) browseTagOpen = false; renderBrowse(); }
 
 function formatTimeAgo(ts) {
   if (!ts) return '';
