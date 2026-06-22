@@ -2606,8 +2606,8 @@ function renderTagDisplay() {
 }
 
 function addCardTag(tag) {
-  const clean = tag.trim().toLowerCase().replace(/\s+/g, '-');
-  if (!clean || editCardTags.includes(clean)) return;
+  const clean = tag.trim().replace(/\s+/g, '-');
+  if (!clean || editCardTags.some(t => t.toLowerCase() === clean.toLowerCase())) return;
   editCardTags.push(clean);
   renderTagDisplay();
 }
