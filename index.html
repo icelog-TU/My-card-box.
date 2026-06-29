@@ -67,7 +67,14 @@
       --ph-heading:   #f2f2f7;
     }
 
-    [data-theme="dark"] .tile { filter: brightness(0.45); }
+    [data-theme="dark"] .tile::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.52);
+      z-index: 1;
+      pointer-events: none;
+    }
 
     [data-theme="dark"] input,
     [data-theme="dark"] textarea {
