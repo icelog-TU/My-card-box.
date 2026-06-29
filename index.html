@@ -67,7 +67,14 @@
       --ph-heading:   #f2f2f7;
     }
 
-    [data-theme="dark"] .tile { filter: brightness(0.6); }
+    [data-theme="dark"] .tile { filter: brightness(0.45); }
+
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background: var(--ph-bg) !important;
+      color: var(--ph-text) !important;
+      -webkit-appearance: none;
+    }
 
     html { scroll-behavior: smooth; }
 
