@@ -67,6 +67,9 @@
       --ph-heading:   #f2f2f7;
     }
 
+    [data-theme="dark"] .tile {
+      filter: none;
+    }
     [data-theme="dark"] .tile::before {
       background: linear-gradient(135deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.72) 100%);
     }
@@ -240,6 +243,7 @@
       border-radius: 3px;
       cursor: pointer;
       background-color: var(--tile-color, var(--tc1));
+      filter: saturate(1.4) brightness(1.1);
       transition: transform 0.4s ease, box-shadow 0.4s ease;
     }
 
