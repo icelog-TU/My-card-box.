@@ -763,6 +763,21 @@
       margin-bottom: 0.5rem;
     }
 
+    /* ── Star Rating ── */
+    .star-picker { display: flex; gap: 0.1rem; margin-top: 0.3rem; }
+    .star-picker-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 1.6rem; color: var(--ph-border);
+      padding: 0 0.05rem; line-height: 1;
+      transition: color 0.1s, transform 0.1s;
+    }
+    .star-picker-btn.active { color: #f5c518; }
+    .star-picker-btn:hover { color: #f5c518; transform: scale(1.2); }
+
+    .card-star-row { font-size: 0.75rem; color: #f5c518; letter-spacing: 1px; margin-bottom: 0.25rem; }
+    .detail-star-row { font-size: 1.05rem; color: #f5c518; letter-spacing: 2px; margin-top: 0.2rem; }
+    .browse-item-star { color: #f5c518; font-size: 0.7rem; letter-spacing: 1px; white-space: nowrap; }
+
     .form-group input,
     .form-group textarea {
       width: 100%;
@@ -1437,6 +1452,16 @@
       <label>標題</label>
       <input type="text" id="card-title" placeholder="輸入卡片標題…" oninput="cardModalDirty=true">
     </div>
+    <div class="form-group" style="margin-bottom:0.7rem">
+      <label>星等重要性</label>
+      <div id="star-picker" class="star-picker">
+        <button type="button" class="star-picker-btn" onmousedown="event.preventDefault()" onclick="setCardRating(1)">★</button>
+        <button type="button" class="star-picker-btn" onmousedown="event.preventDefault()" onclick="setCardRating(2)">★</button>
+        <button type="button" class="star-picker-btn" onmousedown="event.preventDefault()" onclick="setCardRating(3)">★</button>
+        <button type="button" class="star-picker-btn" onmousedown="event.preventDefault()" onclick="setCardRating(4)">★</button>
+        <button type="button" class="star-picker-btn" onmousedown="event.preventDefault()" onclick="setCardRating(5)">★</button>
+      </div>
+    </div>
     <div class="form-group">
       <label>內容</label>
       <div class="format-toolbar">
@@ -1930,6 +1955,7 @@ function renderCategory(catId) {
             <button class="card-act-btn danger" title="刪除" onclick="event.stopPropagation();confirmDeleteCard('${card.id}')"><i data-lucide="trash-2" class="lucide icon-sm"></i></button>
           </div>
           <h4>${h(card.title)}</h4>
+          ${card.rating ? `<div class="card-star-row">${'★'.repeat(card.rating)}</div>` : ''}
           <p class="preview">${h(plainText(card.content))}</p>
           <div class="card-tags">
             ${card.categoryIds.map(id => {
@@ -1946,6 +1972,19 @@ function renderCategory(catId) {
 // ════════════════════════════════════════════
 
 let linkedViewMode = localStorage.getItem('pj-linked-view') || 'grid';
+let editCardRating = 0;
+
+function initStarRating(r) {
+  editCardRating = r || 0;
+  document.querySelectorAll('#star-picker .star-picker-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i < editCardRating);
+  });
+}
+function setCardRating(n) {
+  editCardRating = (editCardRating === n) ? 0 : n;
+  cardModalDirty = true;
+  initStarRating(editCardRating);
+}
 
 function setLinkedView(mode) {
   linkedViewMode = mode;
@@ -2020,6 +2059,7 @@ function renderCardDetail(cardId) {
     <div class="card-detail">
       <div class="card-detail-top">
         <h2>${h(card.title)}</h2>
+        ${card.rating ? `<div class="detail-star-row">${'★'.repeat(card.rating)}${'☆'.repeat(5-card.rating)}</div>` : ''}
         <div class="detail-btns">
           <button class="ph-btn sm" onclick="openEditCard('${card.id}')"><i data-lucide="pencil" class="lucide icon-sm"></i> 編輯</button>
           <button class="ph-btn sm danger" onclick="confirmDeleteCard('${card.id}')"><i data-lucide="trash-2" class="lucide icon-sm"></i> 刪除</button>
@@ -2061,6 +2101,7 @@ function openCardModal(defaultCatId) {
   buildCatChips(pre);
   initTagInput([]);
   initLinkSearch([]);
+  initStarRating(0);
   cardModalDirty = false;
   document.getElementById('card-modal').classList.remove('hidden');
   lucide.createIcons();
@@ -2076,6 +2117,7 @@ function openEditCard(cardId) {
   buildCatChips(card.categoryIds);
   initTagInput(card.tags || []);
   initLinkSearch(card.links || []);
+  initStarRating(card.rating || 0);
   cardModalDirty = false;
   document.getElementById('card-modal').classList.remove('hidden');
   lucide.createIcons();
@@ -2114,10 +2156,11 @@ function saveCard() {
     card.categoryIds = [...selectedCats];
     card.links = [...selectedLinks];
     card.tags = [...editCardTags];
+    card.rating = editCardRating;
     card.updatedAt = Date.now();
   } else {
     const now = Date.now();
-    db.cards.push({ id: uid(), title, content, categoryIds: [...selectedCats], links: [...selectedLinks], tags: [...editCardTags], createdAt: now, updatedAt: now });
+    db.cards.push({ id: uid(), title, content, categoryIds: [...selectedCats], links: [...selectedLinks], tags: [...editCardTags], rating: editCardRating, createdAt: now, updatedAt: now });
   }
 
   saveDB();
@@ -2884,9 +2927,10 @@ function deleteTag(tag) {
 //  Browse view
 // ════════════════════════════════════════════
 
-let browseSort    = 'newest'; // 'newest' | 'oldest' | 'alpha'
-let browseCatId   = null;     // null = 全部
-let browseTagOpen = false;    // tag section collapsed by default
+let browseSort      = 'newest'; // 'newest' | 'oldest' | 'alpha' | 'rating'
+let browseCatId     = null;     // null = 全部
+let browseTagOpen   = false;    // tag section collapsed by default
+let browseStarMin   = 0;        // 0 = 全部, 1-5 = minimum stars
 
 function toggleBrowseTagSection() {
   browseTagOpen = !browseTagOpen;
@@ -2920,11 +2964,16 @@ function renderBrowse() {
   if (browseTagFilter) {
     cards = cards.filter(c => (c.tags || []).includes(browseTagFilter));
   }
+  if (browseStarMin) {
+    cards = cards.filter(c => (c.rating || 0) >= browseStarMin);
+  }
 
   if (browseSort === 'newest') {
     cards.sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt));
   } else if (browseSort === 'oldest') {
     cards.sort((a, b) => (a.createdAt || a.updatedAt) - (b.createdAt || b.updatedAt));
+  } else if (browseSort === 'rating') {
+    cards.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   } else {
     cards.sort((a, b) => a.title.localeCompare(b.title, 'zh-TW'));
   }
@@ -2964,11 +3013,22 @@ function renderBrowse() {
     </div>
 
     <div class="browse-filter-section">
-      <span class="browse-filter-label">時序</span>
+      <span class="browse-filter-label">星等</span>
+      <div class="browse-filter-chips">
+        <button class="filter-chip ${!browseStarMin ? 'active' : ''}" onclick="setBrowseStar(0)">全部</button>
+        ${[1,2,3,4,5].map(n => `
+          <button class="filter-chip ${browseStarMin === n ? 'active' : ''}" onclick="setBrowseStar(${n})">${'★'.repeat(n)} 以上</button>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="browse-filter-section">
+      <span class="browse-filter-label">排序</span>
       <div class="browse-filter-chips">
         <button class="filter-chip ${browseSort === 'newest' ? 'active' : ''}" onclick="setBrowseSort('newest')">最新 → 最舊</button>
         <button class="filter-chip ${browseSort === 'oldest' ? 'active' : ''}" onclick="setBrowseSort('oldest')">最舊 → 最新</button>
         <button class="filter-chip ${browseSort === 'alpha' ? 'active' : ''}" onclick="setBrowseSort('alpha')">標題 A–Z</button>
+        <button class="filter-chip ${browseSort === 'rating' ? 'active' : ''}" onclick="setBrowseSort('rating')">★ 星等高 → 低</button>
       </div>
     </div>
 
@@ -2982,7 +3042,7 @@ function renderBrowse() {
             const t = formatTimeAgo(card.updatedAt || card.createdAt);
             return `
               <li class="browse-item" onclick="showCard('${card.id}', null)">
-                <span class="browse-item-title">${h(card.title)}</span>
+                <span class="browse-item-title">${h(card.title)}${card.rating ? ` <span class="browse-item-star">${'★'.repeat(card.rating)}</span>` : ''}</span>
                 <span class="browse-item-meta">${cats ? h(cats) + '<br>' : ''}${t}</span>
               </li>`;
           }).join('')}
@@ -2994,6 +3054,7 @@ function renderBrowse() {
 function setBrowseSort(sort)  { browseSort = sort; renderBrowse(); }
 function setBrowseCat(catId)  { browseCatId = catId; renderBrowse(); }
 function setBrowseTag(tag)    { browseTagFilter = tag; if (!tag) browseTagOpen = false; renderBrowse(); }
+function setBrowseStar(n)     { browseStarMin = n; renderBrowse(); }
 
 function formatTimeAgo(ts) {
   if (!ts) return '';
